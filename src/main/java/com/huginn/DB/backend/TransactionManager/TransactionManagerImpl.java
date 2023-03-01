@@ -99,7 +99,12 @@ public class TransactionManagerImpl implements TransactionManager {
 
     @Override
     public void close() {
-
+        try {
+            fc.close();
+            file.close();
+        } catch (IOException e) {
+            Panic.panic(e);
+        }
     }
 
     //检查XID文件是否合法
