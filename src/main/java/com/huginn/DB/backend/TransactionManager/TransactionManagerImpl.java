@@ -176,11 +176,6 @@ public class TransactionManagerImpl implements TransactionManager {
             //header位于文件的首8个字节
             fc.position(0);
             fc.write(buf);
-        } catch (IOException e) {
-            Panic.panic(e);
-        }
-
-        try {
             /**
              * 为了减少访问磁盘的次数，通过文件通道对文件进行操作之后可能不会立即刷出到磁盘，此时如果系统崩溃，将导致数据的丢失。
              * 为了减少这种风险，在进行了重要数据的操作之后应该调用 force() 方法强制将数据刷出到磁盘。
@@ -191,6 +186,7 @@ public class TransactionManagerImpl implements TransactionManager {
         } catch (IOException e) {
             Panic.panic(e);
         }
+
     }
 
     //检查xid的事务是否处于status状态
