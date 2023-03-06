@@ -45,7 +45,7 @@ public class DataItemImpl implements DataItem {
      */
     @Override
     public SubArray data() {
-        //返回DataItem的data部分：raw
+        //返回DataItem的data部分
         return new SubArray(raw.raw, raw.start + OF_DATA, raw.end);
     }
 

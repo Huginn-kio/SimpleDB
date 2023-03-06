@@ -25,7 +25,7 @@ public class TransactionManagerImpl implements TransactionManager {
     private static final byte FIELD_TRAN_COMMITTED = 1;
     private static final byte FIELD_TRAN_ABORTED = 2;
     //超级事务的XID为0，其事务状态永远为committed
-    private static final long SUPER_XID = 0;
+    public static final long SUPER_XID = 0;
     //规定XID文件后缀
     static final String XID_SUFFIX = ".xid";
     //XID文件, RandomAccessFile可以自由访问文件的任意位置
