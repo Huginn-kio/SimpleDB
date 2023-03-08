@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * DataItem: [ValidFlag] [DataSize] [Data]
  * ValidFlag: 标识了该 DataItem 是否有效,  1字节 (删除一个 DataItem，只需要简单地将其有效位设置为 0)
  * DataSize:  标识了后面 Data 的长度, 2 字节
- * DataItem不单单是一种提供给上层的抽象的数据，实际上一个DataItem在磁盘上也是如此的结构组织的`
+ * DataItem不单单是一种提供给上层的抽象的数据，实际上一个DataItem在磁盘上也是如此的结构组织的
  */
 
 public class DataItemImpl implements DataItem {
