@@ -1,0 +1,6 @@
+package com.huginn.DB.backend.TableManager.parser.statement;
+
+public class Delete {
+    public String tableName;
+    public Where where;
+}

@@ -16,6 +16,10 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * B+树
  * IM 对上层模块主要提供两种能力：插入索引和搜索节点。
+ * IM 为什么不提供删除索引的能力?
+ * 当上层模块通过 VM 删除某个 Entry，实际的操作是设置其 XMAX。
+ * 如果不去删除对应索引的话，当后续再次尝试读取该 Entry 时，是可以通过索引寻找到的，
+ * 但是由于设置了 XMAX，寻找不到合适的版本而返回一个找不到内容的错误。
  */
 
 public class BPlusTree {
