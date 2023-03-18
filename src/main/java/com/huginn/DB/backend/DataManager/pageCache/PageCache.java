@@ -16,7 +16,7 @@ import java.nio.channels.FileChannel;
 
 public interface PageCache {
 
-    public static final int PAGE_SIZE = 1 << 13;  //页面
+    public static final int PAGE_SIZE = 1 << 13;  //页面  默认数据页大小定为 8K
 
     int newPage(byte[] initData);
 
