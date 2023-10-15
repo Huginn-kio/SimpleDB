@@ -1,7 +1,6 @@
 package simpleDB.backend.dm;
 
 
-import simpleDB.backend.common.AbstractCache;
 import simpleDB.backend.dm.dataItem.DataItem;
 import simpleDB.backend.dm.dataItem.DataItemImpl;
 import simpleDB.backend.dm.logger.Logger;
@@ -13,10 +12,10 @@ import simpleDB.backend.dm.pageIndex.PageIndex;
 import simpleDB.backend.dm.pageIndex.PageInfo;
 import simpleDB.backend.tm.TransactionManager;
 import simpleDB.backend.utils.Panic;
-import simpleDB.backend.utils.Types;
+import simpleDB.backend.utils.Parser;
 import simpleDB.common.Error;
 
-public class DataManagerImpl extends AbstractCache<DataItem> implements DataManager {
+public class DataManagerImpl implements DataManager {
 
     TransactionManager tm;
     PageCache pc;
@@ -25,7 +24,6 @@ public class DataManagerImpl extends AbstractCache<DataItem> implements DataMana
     Page pageOne;
 
     public DataManagerImpl(PageCache pc, Logger logger, TransactionManager tm) {
-        super(0);
         this.pc = pc;
         this.logger = logger;
         this.tm = tm;
@@ -34,9 +32,8 @@ public class DataManagerImpl extends AbstractCache<DataItem> implements DataMana
 
     @Override
     public DataItem read(long uid) throws Exception {
-        DataItemImpl di = (DataItemImpl)super.get(uid);
+        DataItemImpl di = (DataItemImpl)DataItem.parseDataItem(pc.getPage(Parser.uidToPageNo(uid)), Parser.uidToPageOffeset(uid),this);
         if(!di.isValid()) {
-            di.release();
             return null;
         }
         return di;
@@ -72,8 +69,7 @@ public class DataManagerImpl extends AbstractCache<DataItem> implements DataMana
 
             short offset = PageX.insert(pg, raw);
 
-            pg.release();
-            return Types.addressToUid(pi.pgno, offset);
+            return Parser.addressToUid(pi.pgno, offset);
 
         } finally {
             // 将取出的pg重新插入pIndex
@@ -87,11 +83,8 @@ public class DataManagerImpl extends AbstractCache<DataItem> implements DataMana
 
     @Override
     public void close() {
-        super.close();
         logger.close();
-
         PageOne.setVcClose(pageOne);
-        pageOne.release();
         pc.close();
     }
 
@@ -101,23 +94,6 @@ public class DataManagerImpl extends AbstractCache<DataItem> implements DataMana
         logger.log(log);
     }
 
-    public void releaseDataItem(DataItem di) {
-        super.release(di.getUid());
-    }
-
-    @Override
-    protected DataItem getForCache(long uid) throws Exception {
-        short offset = (short)(uid & ((1L << 16) - 1));
-        uid >>>= 32;
-        int pgno = (int)(uid & ((1L << 32) - 1));
-        Page pg = pc.getPage(pgno);
-        return DataItem.parseDataItem(pg, offset, this);
-    }
-
-    @Override
-    protected void releaseForCache(DataItem di) {
-        di.page().release();
-    }
 
     // 在创建文件时初始化PageOne
     void initPageOne() {
@@ -152,8 +128,6 @@ public class DataManagerImpl extends AbstractCache<DataItem> implements DataMana
                 Panic.panic(e);
             }
             pIndex.add(pg.getPageNumber(), PageX.getFreeSpace(pg));
-            pg.release();
         }
     }
-    
 }

@@ -22,7 +22,6 @@ public class PageCacheImpl extends AbstractCache<Page> implements PageCache {
     private RandomAccessFile file;
     private FileChannel fc;
     private Lock fileLock;
-
     private AtomicInteger pageNumbers;
 
     PageCacheImpl(RandomAccessFile file, FileChannel fileChannel, int maxResource) {
@@ -45,7 +44,7 @@ public class PageCacheImpl extends AbstractCache<Page> implements PageCache {
     public int newPage(byte[] initData) {
         int pgno = pageNumbers.incrementAndGet();
         Page pg = new PageImpl(pgno, initData, null);
-        flush(pg);
+        flushPage(pg);
         return pgno;
     }
 
@@ -76,20 +75,12 @@ public class PageCacheImpl extends AbstractCache<Page> implements PageCache {
     @Override
     protected void releaseForCache(Page pg) {
         if(pg.isDirty()) {
-            flush(pg);
+            flushPage(pg);
             pg.setDirty(false);
         }
     }
 
-    public void release(Page page) {
-        release((long)page.getPageNumber());
-    }
-
     public void flushPage(Page pg) {
-        flush(pg);
-    }
-
-    private void flush(Page pg) {
         int pgno = pg.getPageNumber();
         long offset = pageOffset(pgno);
 

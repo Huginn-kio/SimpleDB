@@ -42,22 +42,22 @@ public class Recover {
 
         lg.rewind();
         int maxPgno = 0;
-        while(true) {
+        while (true) {
             byte[] log = lg.next();
-            if(log == null) break;
+            if (log == null) break;
             int pgno;
-            if(isInsertLog(log)) {
+            if (isInsertLog(log)) {
                 InsertLogInfo li = parseInsertLog(log);
                 pgno = li.pgno;
             } else {
                 UpdateLogInfo li = parseUpdateLog(log);
                 pgno = li.pgno;
             }
-            if(pgno > maxPgno) {
+            if (pgno > maxPgno) {
                 maxPgno = pgno;
             }
         }
-        if(maxPgno == 0) {
+        if (maxPgno == 0) {
             maxPgno = 1;
         }
         pc.truncateByBgno(maxPgno);
@@ -74,19 +74,19 @@ public class Recover {
 
     private static void redoTranscations(TransactionManager tm, Logger lg, PageCache pc) {
         lg.rewind();
-        while(true) {
+        while (true) {
             byte[] log = lg.next();
-            if(log == null) break;
-            if(isInsertLog(log)) {
+            if (log == null) break;
+            if (isInsertLog(log)) {
                 InsertLogInfo li = parseInsertLog(log);
                 long xid = li.xid;
-                if(!tm.isActive(xid)) {
+                if (!tm.isActive(xid)) {
                     doInsertLog(pc, log, REDO);
                 }
             } else {
                 UpdateLogInfo xi = parseUpdateLog(log);
                 long xid = xi.xid;
-                if(!tm.isActive(xid)) {
+                if (!tm.isActive(xid)) {
                     doUpdateLog(pc, log, REDO);
                 }
             }
@@ -96,14 +96,14 @@ public class Recover {
     private static void undoTranscations(TransactionManager tm, Logger lg, PageCache pc) {
         Map<Long, List<byte[]>> logCache = new HashMap<>();
         lg.rewind();
-        while(true) {
+        while (true) {
             byte[] log = lg.next();
-            if(log == null) break;
-            if(isInsertLog(log)) {
+            if (log == null) break;
+            if (isInsertLog(log)) {
                 InsertLogInfo li = parseInsertLog(log);
                 long xid = li.xid;
-                if(tm.isActive(xid)) {
-                    if(!logCache.containsKey(xid)) {
+                if (tm.isActive(xid)) {
+                    if (!logCache.containsKey(xid)) {
                         logCache.put(xid, new ArrayList<>());
                     }
                     logCache.get(xid).add(log);
@@ -111,8 +111,8 @@ public class Recover {
             } else {
                 UpdateLogInfo xi = parseUpdateLog(log);
                 long xid = xi.xid;
-                if(tm.isActive(xid)) {
-                    if(!logCache.containsKey(xid)) {
+                if (tm.isActive(xid)) {
+                    if (!logCache.containsKey(xid)) {
                         logCache.put(xid, new ArrayList<>());
                     }
                     logCache.get(xid).add(log);
@@ -121,11 +121,11 @@ public class Recover {
         }
 
         // 对所有active log进行倒序undo
-        for(Map.Entry<Long, List<byte[]>> entry : logCache.entrySet()) {
+        for (Map.Entry<Long, List<byte[]>> entry : logCache.entrySet()) {
             List<byte[]> logs = entry.getValue();
-            for (int i = logs.size()-1; i >= 0; i --) {
+            for (int i = logs.size() - 1; i >= 0; i--) {
                 byte[] log = logs.get(i);
-                if(isInsertLog(log)) {
+                if (isInsertLog(log)) {
                     doInsertLog(pc, log, UNDO);
                 } else {
                     doUpdateLog(pc, log, UNDO);
@@ -141,9 +141,9 @@ public class Recover {
 
     // [LogType] [XID] [UID] [OldRaw] [NewRaw]
     private static final int OF_TYPE = 0;
-    private static final int OF_XID = OF_TYPE+1;
-    private static final int OF_UPDATE_UID = OF_XID+8;
-    private static final int OF_UPDATE_RAW = OF_UPDATE_UID+8;
+    private static final int OF_XID = OF_TYPE + 1;
+    private static final int OF_UPDATE_UID = OF_XID + 8;
+    private static final int OF_UPDATE_RAW = OF_UPDATE_UID + 8;
 
     public static byte[] updateLog(long xid, DataItem di) {
         byte[] logType = {LOG_TYPE_UPDATE};
@@ -159,12 +159,11 @@ public class Recover {
         UpdateLogInfo li = new UpdateLogInfo();
         li.xid = Parser.parseLong(Arrays.copyOfRange(log, OF_XID, OF_UPDATE_UID));
         long uid = Parser.parseLong(Arrays.copyOfRange(log, OF_UPDATE_UID, OF_UPDATE_RAW));
-        li.offset = (short)(uid & ((1L << 16) - 1));
-        uid >>>= 32;
-        li.pgno = (int)(uid & ((1L << 32) - 1));
+        li.offset = Parser.uidToPageOffeset(uid);
+        li.pgno = Parser.uidToPageNo(uid);
         int length = (log.length - OF_UPDATE_RAW) / 2;
-        li.oldRaw = Arrays.copyOfRange(log, OF_UPDATE_RAW, OF_UPDATE_RAW+length);
-        li.newRaw = Arrays.copyOfRange(log, OF_UPDATE_RAW+length, OF_UPDATE_RAW+length*2);
+        li.oldRaw = Arrays.copyOfRange(log, OF_UPDATE_RAW, OF_UPDATE_RAW + length);
+        li.newRaw = Arrays.copyOfRange(log, OF_UPDATE_RAW + length, OF_UPDATE_RAW + length * 2);
         return li;
     }
 
@@ -172,7 +171,7 @@ public class Recover {
         int pgno;
         short offset;
         byte[] raw;
-        if(flag == REDO) {
+        if (flag == REDO) {
             UpdateLogInfo xi = parseUpdateLog(log);
             pgno = xi.pgno;
             offset = xi.offset;
@@ -189,17 +188,13 @@ public class Recover {
         } catch (Exception e) {
             Panic.panic(e);
         }
-        try {
-            PageX.recoverUpdate(pg, raw, offset);
-        } finally {
-            pg.release();
-        }
+        PageX.recoverUpdate(pg, raw, offset);
     }
 
     // [LogType] [XID] [Pgno] [Offset] [Raw]
-    private static final int OF_INSERT_PGNO = OF_XID+8;
-    private static final int OF_INSERT_OFFSET = OF_INSERT_PGNO+4;
-    private static final int OF_INSERT_RAW = OF_INSERT_OFFSET+2;
+    private static final int OF_INSERT_PGNO = OF_XID + 8;
+    private static final int OF_INSERT_OFFSET = OF_INSERT_PGNO + 4;
+    private static final int OF_INSERT_RAW = OF_INSERT_OFFSET + 2;
 
     public static byte[] insertLog(long xid, Page pg, byte[] raw) {
         byte[] logTypeRaw = {LOG_TYPE_INSERT};
@@ -223,16 +218,13 @@ public class Recover {
         Page pg = null;
         try {
             pg = pc.getPage(li.pgno);
-        } catch(Exception e) {
+        } catch (Exception e) {
             Panic.panic(e);
         }
-        try {
-            if(flag == UNDO) {
-                DataItem.setDataItemRawInvalid(li.raw);
-            }
-            PageX.recoverInsert(pg, li.raw, li.offset);
-        } finally {
-            pg.release();
+
+        if (flag == UNDO) {
+            DataItem.setDataItemRawInvalid(li.raw);
         }
+        PageX.recoverInsert(pg, li.raw, li.offset);
     }
 }

@@ -61,10 +61,12 @@ public class Executor {
         }
         try {
             byte[] res = null;
-            if(Show.class.isInstance(stat)) {
+            if (Show.class.isInstance(stat)) {
                 res = tbm.show(xid);
-            } else if(Create.class.isInstance(stat)) {
-                res = tbm.create(xid, (Create)stat);
+            } else if (Create.class.isInstance(stat)) {
+                res = tbm.create(xid, (Create) stat);
+            } else if (Drop.class.isInstance(stat)) {
+                res = tbm.drop(xid, (Drop) stat);
             } else if(Select.class.isInstance(stat)) {
                 res = tbm.read(xid, (Select)stat);
             } else if(Insert.class.isInstance(stat)) {

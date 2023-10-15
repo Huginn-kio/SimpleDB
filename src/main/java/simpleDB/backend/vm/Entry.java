@@ -4,6 +4,7 @@ import com.google.common.primitives.Bytes;
 import simpleDB.backend.common.SubArray;
 import simpleDB.backend.dm.dataItem.DataItem;
 import simpleDB.backend.utils.Parser;
+import simpleDB.common.Error;
 
 import java.util.Arrays;
 
@@ -32,6 +33,9 @@ public class Entry {
 
     public static Entry loadEntry(VersionManager vm, long uid) throws Exception {
         DataItem di = ((VersionManagerImpl)vm).dm.read(uid);
+        if(di == null) {
+            throw Error.NullEntryException;
+        }
         return newEntry(vm, di, uid);
     }
 
@@ -39,14 +43,6 @@ public class Entry {
         byte[] xmin = Parser.long2Byte(xid);
         byte[] xmax = new byte[8];
         return Bytes.concat(xmin, xmax, data);
-    }
-
-    public void release() {
-        ((VersionManagerImpl)vm).releaseEntry(this);
-    }
-
-    public void remove() {
-        dataItem.release();
     }
 
     // 以拷贝的形式返回内容

@@ -15,7 +15,7 @@ public class Parser {
         Object stat = null;
         Exception statErr = null;
         try {
-            switch(token) {
+            switch(token.toLowerCase()) {
                 case "begin":
                     stat = parseBegin(tokenizer);
                     break;

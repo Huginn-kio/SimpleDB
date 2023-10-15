@@ -124,9 +124,6 @@ public class Node {
         return n;
     }
 
-    public void release() {
-        dataItem.release();
-    }
 
     public boolean isLeaf() {
         dataItem.rLock();

@@ -1,6 +1,8 @@
 package simpleDB.backend.tbm;
 
 import com.google.common.primitives.Bytes;
+import simpleDB.backend.dm.dataItem.DataItem;
+import simpleDB.backend.dm.dataItem.DataItemImpl;
 import simpleDB.backend.parser.statement.*;
 import simpleDB.backend.tbm.Field.ParseValueRes;
 import simpleDB.backend.tm.TransactionManagerImpl;
@@ -53,6 +55,17 @@ public class Table {
         }
 
         return tb.persistSelf(xid);
+    }
+
+    public static void dropTable(TableManager tbm, long uid, long xid, Drop drop) throws Exception {
+        Table preTable = loadTable(tbm, uid);
+        Table table = loadTable(tbm, preTable.nextUid);
+        while (!table.name.equals(drop.tableName)) {
+            preTable = table;
+            table = loadTable(tbm, table.nextUid);
+        }
+        preTable.nextUid = table.nextUid;
+        //todo 修改磁盤的信息
     }
 
     public Table(TableManager tbm, long uid) {

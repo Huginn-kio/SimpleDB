@@ -1,6 +1,7 @@
 package simpleDB.backend.dm.page;
 
 import simpleDB.backend.dm.pageCache.PageCache;
+import simpleDB.backend.dm.pageCache.PageCacheImpl;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -10,10 +11,9 @@ public class PageImpl implements Page {
     private byte[] data;
     private boolean dirty;
     private Lock lock;
-    
-    private PageCache pc;
+    public PageCacheImpl pc;
 
-    public PageImpl(int pageNumber, byte[] data, PageCache pc) {
+    public PageImpl(int pageNumber, byte[] data, PageCacheImpl pc) {
         this.pageNumber = pageNumber;
         this.data = data;
         this.pc = pc;
@@ -26,10 +26,6 @@ public class PageImpl implements Page {
 
     public void unlock() {
         lock.unlock();
-    }
-
-    public void release() {
-        pc.release(this);
     }
 
     public void setDirty(boolean dirty) {

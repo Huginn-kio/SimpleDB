@@ -12,7 +12,7 @@ public interface TableManager {
 
     byte[] show(long xid);
     byte[] create(long xid, Create create) throws Exception;
-
+    byte[] drop(long xid, Drop drop) throws Exception;
     byte[] insert(long xid, Insert insert) throws Exception;
     byte[] read(long xid, Select select) throws Exception;
     byte[] update(long xid, Update update) throws Exception;

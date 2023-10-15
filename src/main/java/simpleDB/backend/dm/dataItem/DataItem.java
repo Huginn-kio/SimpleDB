@@ -5,7 +5,6 @@ import simpleDB.backend.common.SubArray;
 import simpleDB.backend.dm.DataManagerImpl;
 import simpleDB.backend.dm.page.Page;
 import simpleDB.backend.utils.Parser;
-import simpleDB.backend.utils.Types;
 
 import java.util.Arrays;
 
@@ -15,7 +14,6 @@ public interface DataItem {
     void before();
     void unBefore();
     void after(long xid);
-    void release();
 
     void lock();
     void unlock();
@@ -38,7 +36,7 @@ public interface DataItem {
         byte[] raw = pg.getData();
         short size = Parser.parseShort(Arrays.copyOfRange(raw, offset+DataItemImpl.OF_SIZE, offset+DataItemImpl.OF_DATA));
         short length = (short)(size + DataItemImpl.OF_DATA);
-        long uid = Types.addressToUid(pg.getPageNumber(), offset);
+        long uid = Parser.addressToUid(pg.getPageNumber(), offset);
         return new DataItemImpl(new SubArray(raw, offset, offset+length), new byte[length], pg, uid, dm);
     }
 

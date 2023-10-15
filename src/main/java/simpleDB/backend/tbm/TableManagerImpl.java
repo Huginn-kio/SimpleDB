@@ -102,11 +102,28 @@ public class TableManagerImpl implements TableManager {
                 xidTableCache.put(xid, new ArrayList<>());
             }
             xidTableCache.get(xid).add(table);
-            return ("create " + create.tableName).getBytes();
+            return ("create table " + create.tableName).getBytes();
         } finally {
             lock.unlock();
         }
     }
+
+    @Override
+    public byte[] drop(long xid, Drop drop) throws Exception {
+        lock.lock();
+        try {
+            if(!tableCache.containsKey(drop.tableName)) {
+                throw Error.TableNotFoundException;
+            }
+            Table.dropTable(this, firstTableUid(), xid, drop);
+            tableCache.remove(drop.tableName);
+            return ("drop table " + drop.tableName).getBytes();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
     @Override
     public byte[] insert(long xid, Insert insert) throws Exception {
         lock.lock();
