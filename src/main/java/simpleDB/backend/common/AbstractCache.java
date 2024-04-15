@@ -47,7 +47,9 @@ public abstract class AbstractCache<T> {
                 // 资源在缓存中，直接返回
                 Node node = cache.get(key);
                 T obj = node.val;
+                lock.lock();
                 moveToHead(node);
+                lock.unlock();
                 return obj;
             }
 
